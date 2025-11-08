@@ -1,5 +1,6 @@
 const express = require("express");
 const sanitize = require("sanitize-html");
+const bcrypt = require('bcrypt')
 const route = express.Router()
 const user_model = require("../dummy_test_db/test_user")
 
@@ -8,7 +9,11 @@ route.post("/users", async (req, res)=>{
     try{
         const username = sanitize(req.body.username);
         const password = sanitize(req.body.password);
-        const add_account = user_model.add_account(username, password)
+
+        const salt = await bcrypt.genSalt(10)
+        const hashed_pass = await bcrypt.hash(password, salt)
+
+        const add_account = user_model.add_account(username, hashed_pass)
 
         let status = 200
 

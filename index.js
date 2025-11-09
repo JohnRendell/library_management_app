@@ -29,7 +29,7 @@ async function connectDB() {
 connectDB();
 
 app.get("/", (req, res)=>{
-    res.json({ message: "message is alive", database_name: mongoose.connection.name })
+    res.json({ message: "message is alive" })
 })
 
 //routers

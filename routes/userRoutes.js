@@ -2,7 +2,7 @@ const express = require("express");
 const sanitize = require("sanitize-html");
 const bcrypt = require('bcrypt')
 const route = express.Router()
-const userModel = require("../models/userModel");
+const userModelSchema = require("../models/userModel");
 
 //create user
 route.post("/users", async (req, res)=>{
@@ -13,7 +13,7 @@ route.post("/users", async (req, res)=>{
         const salt = await bcrypt.genSalt(10)
         const hashed_pass = await bcrypt.hash(password, salt)
 
-        const check_account = await userModel.findOne({ username: username })
+        const check_account = await userModelSchema.findOne({ username: username })
         
         let message = "Failed to create account";
         let status = 200;
@@ -22,7 +22,7 @@ route.post("/users", async (req, res)=>{
             message = "Username already exist";
         }
         else{
-            const users = await userModel.find({}, { userID: 1, _id: 0 });
+            const users = await userModelSchema.find({}, { userID: 1, _id: 0 });
             const existingIDs = users.map(u => u.userID);
             let newUserID = 1;
 
@@ -30,7 +30,7 @@ route.post("/users", async (req, res)=>{
                 newUserID++;
             }
 
-            let add_account = await userModel.create({ userID: newUserID , username: username, password: hashed_pass });
+            let add_account = await userModelSchema.create({ userID: newUserID , username: username, password: hashed_pass });
 
             if(add_account){
                 status = 201
@@ -54,7 +54,7 @@ route.patch("/users/:id", async (req, res)=>{
         let status = 404
         let message = "UserID not exist"
        
-        let update_account = await userModel.findOneAndUpdate(
+        let update_account = await userModelSchema.findOneAndUpdate(
             { userID: req.params.id },
             { $set: { username: username, password: password } },
             { new: true }
@@ -80,7 +80,7 @@ route.delete("/users/:id", async (req, res)=>{
         let status = 404
         let message = "UserID not exist"
        
-        let delete_account = await userModel.findOneAndDelete({ userID: req.params.id })
+        let delete_account = await userModelSchema.findOneAndDelete({ userID: req.params.id })
 
         if(delete_account){
             status = 200

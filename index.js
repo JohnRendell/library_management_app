@@ -7,7 +7,7 @@ const path = require("path")
 app.use(express.json())
 
 if(process.env.NODE_ENV !== "production"){
-    require("dotenv").config({ path: path.join(__dirname, "../keys.env") })
+    require("dotenv").config({ path: path.join(__dirname, "./keys.env") })
 }
 
 app.get("/", (req, res)=>{

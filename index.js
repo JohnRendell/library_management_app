@@ -14,19 +14,22 @@ if(process.env.NODE_ENV !== "production"){
 
 //connect to mongo db
 const mongoose = require("mongoose");
+const uri = process.env.MONGODB_URI
 
-async function connectDB() {
+const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
+async function run() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("Connected to MongoDB");
-    console.log("DB name: " + mongoose.connection.name)
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-    process.exit(1);
+    // Create a Mongoose client with a MongoClientOptions object to set the Stable API version
+    await mongoose.connect(uri, clientOptions);
+    await mongoose.connection.db.admin().command({ ping: 1 });
+
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  }
+  catch(err){
+    console.error(err)
   }
 }
-
-connectDB();
+run().catch(console.dir);
 
 app.get("/", (req, res)=>{
     res.json({ message: "message is alive" })

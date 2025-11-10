@@ -30,7 +30,7 @@ route.post("/users", async (req, res)=>{
                 newUserID++;
             }
 
-            let add_account = await userModelSchema.create({ userID: newUserID , username: username, password: hashed_pass });
+            let add_account = await userModelSchema.create({ userID: newUserID, borrowedBooks: [], username: username, password: hashed_pass });
 
             if(add_account){
                 status = 201
@@ -93,6 +93,52 @@ route.delete("/users/:id", async (req, res)=>{
     catch(err){
         console.log(err)
         res.status(500).json({ message: "Internal Error"})
+    }
+});
+
+//get specific user
+route.get("/users/:id", async (req, res)=>{
+    try{
+        const get_user = await userModelSchema.findOne({ userID: req.params.id })
+        let status = 404;
+        let message = "User ID not found";
+        let username = "Not Found"
+
+        if(get_user){
+            status = 200
+            message = "Success"
+            username = get_user.username
+        }
+
+        res.status(status).json({ message: message, username: username })
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+});
+
+//login user account
+route.post("/users/login", async (req, res)=>{
+    try{
+        const find_user = await userModelSchema.findOne({ username: sanitize(req.body.username) })
+        let message = "Username or password incorrect";
+        let status = 404
+
+        if(find_user){
+            let isPassLegit = await bcrypt.compare(sanitize(req.body.password), find_user.password)
+
+            if(isPassLegit){
+                message = "Success";
+                status = 200
+            }
+        }
+
+        res.status(status).json({ message: message })
+    }
+    catch(err){
+        console.log(err);
+        res.status(500).json({ message: "Internal Error" })
     }
 });
 

@@ -138,4 +138,36 @@ route.patch("/books/bulk", async (req, res) => {
 });
 
 
+// MY Api's - jake
+// /api/v1/books/:id/borrow
+route.patch("books/:id/return", async (req, res) => {
+    try {
+        const book_id = req.parseInt(req.params.id);
+
+        let update_book = await bookModelSchema.findOneAndUpdate(
+            { bookID: req.params.id },
+            { $set: { availability: true } },
+            { new: true }
+        )
+        if (update_book) {
+            res.status(200).json({
+                message: "book sucessfully updated",
+                content: update_book
+            })
+        };
+        }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+})  
+
+
+
+
 module.exports = route
+
+// /api/v1/books/bulk
+
+// /api/v1/books/bulk/return
+// /api/v1/books/bulk/borrow

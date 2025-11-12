@@ -10,7 +10,7 @@ const bookModelSchema = new mongoose.Schema({
     publisher: { type: String, required: true }, 
     // "YYYY-MM-DD"
     publication_date: { type: String, required: true},
-    availability: { type: String, required: true}
+    available: { type: Boolean, required: true}
 });
 
 

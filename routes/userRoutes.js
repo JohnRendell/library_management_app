@@ -118,6 +118,26 @@ route.get("/users/:id", async (req, res)=>{
     }
 });
 
+//get all users
+route.get("/users", async (req, res)=>{
+    try{
+        const get_user = await userModelSchema.find().sort({ createdAt: -1 })
+        let status = 404;
+        let message = "Not Found: Requested Resource Doesn't Exist";
+
+
+        if(get_user){
+            status = 200
+        }
+
+        res.status(status).json({get_user})
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+});
+
 //login user account
 route.post("/users/login", async (req, res)=>{
     try{

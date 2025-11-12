@@ -2,14 +2,15 @@ const express = require("express")
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
 
+// get all books
 route.get("/books", async (req, res)=>{
     try{
-        const check_books = await bookModelSchema.find().sort({ bookID })
+        const check_books = await bookModelSchema.find().sort({ createdAt: -1 })
         
         let message = "OK: Successfully Retrieved all of the Books";
         let status = 200;
 
-        if(check_books && check_books.length > 0){
+        if(check_books){
             res.status(status).json({ message: message, check_books })
         }
         else{
@@ -23,6 +24,28 @@ route.get("/books", async (req, res)=>{
     }
 });
 
+// get book by id
+route.get("/books/:id", async (req, res)=>{
+    try{
+        const check_book = await bookModelSchema.findOne({bookID: Number(req.params.id) })
+        let message = "OK: Successfully Retrieved the Book";
+        let status = 200;
+
+        if(check_book){
+            res.status(status).json({ message: message, check_book })
+        }
+        else{
+            res.status(404).json({ message: "Not Found: BookID Doesn't Exist!" })
+        }
+        
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+});
+
+// add book
 route.post("/books", async (req, res)=>{
     try{
         const add_book = new bookModelSchema(req.body);
@@ -46,6 +69,7 @@ route.post("/books", async (req, res)=>{
     }
 });
 
+// delete book
 route.delete("/books/:id", async (req, res)=>{
     try{
         const delete_book = await bookModelSchema.findOneAndDelete({ bookID: Number(req.params.id) });
@@ -64,6 +88,7 @@ route.delete("/books/:id", async (req, res)=>{
     }
 });
 
+// update book
 route.patch("/books/:id", async (req, res)=>{
     try{
         const update_book = await bookModelSchema.findOneAndUpdate(
@@ -116,20 +141,6 @@ route.patch("/books/bulk", async (req, res) => {
         res.status(500).json({ message: "Internal Error" });
     }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 module.exports = route

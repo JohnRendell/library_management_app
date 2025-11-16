@@ -7,9 +7,7 @@ const userModelSchema = new mongoose.Schema({
     userID: { type: Number, required: true },
     username: { type: String, required: true },
     password: { type: String, required: true }, 
-    borrowedBooks: [{ type: Schema.Types.ObjectId, ref: 'book' }]
+    borrowedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Books' }]
 });
-
-
 
 module.exports = database.model("account", userModelSchema)

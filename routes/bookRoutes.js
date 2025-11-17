@@ -2,6 +2,8 @@ const express = require("express")
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
 
+
+
 // get all books
 route.get("/books", async (req, res)=>{
     try{
@@ -69,10 +71,43 @@ route.post("/books", async (req, res)=>{
     }
 });
 
+// delete multiple book entries
+route.delete("/books/bulk", async (req, res) => {
+    try {
+        console.log("Atleast this works");
+
+        
+        const book_ids = req.body.book_ids;
+
+         if (!Array.isArray(book_ids) || book_ids.length === 0) {
+            return res.status(400).json({ message: "Bad Request: Provide an array of bookIDs" });
+        }
+
+        const delete_book = await bookModelSchema.deleteMany({ bookID: { $in: book_ids } });
+
+        let message = "Successfully Deleted Books!";
+
+        if(delete_book){
+            res.status(200).json({
+                message: message,
+                deleted_ids: book_ids,
+                no_of_books_deleted : delete_book
+             })
+        }
+
+        
+    } catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+})  
+
+
 // delete book
 route.delete("/books/:id", async (req, res)=>{
-    try{
-        const delete_book = await bookModelSchema.findOneAndDelete({ bookID: Number(req.params.id) });
+    try {
+        const book_id = Number(req.params.id)
+        const delete_book = await bookModelSchema.findOneAndDelete({ bookID: book_id });
         let message = "Successfully Deleted a Book!";
 
         if(delete_book){
@@ -81,12 +116,13 @@ route.delete("/books/:id", async (req, res)=>{
         else{
             res.status(400).json({ message: "Bad Request: Invalid Input!" })
         }
-    }
-    catch(err){
+    }catch(err){
         console.log(err)
-        res.status(500).json({ message: "Internal Error"})
+        res.status(500).json({ message: "First delete Internal Error"})
     }
 });
+
+
 
 // update book
 route.patch("/books/:id", async (req, res)=>{
@@ -100,7 +136,10 @@ route.patch("/books/:id", async (req, res)=>{
         let message = "Successfully Updated a Book!";
 
         if(update_book){
-            res.status(200).json({ message: message })
+            res.status(200).json({
+                message: message,
+                content: update_book
+            })
         }
         else{
             res.status(400).json({ message: "Bad Request: Invalid Input!" })
@@ -112,6 +151,7 @@ route.patch("/books/:id", async (req, res)=>{
     }
 });
 
+// update multiple books
 route.patch("/books/bulk", async (req, res) => {
     try {
         const { bookIDs, title, author, genre, publisher, publication_date, availability } = req.body;
@@ -136,6 +176,116 @@ route.patch("/books/bulk", async (req, res) => {
         res.status(500).json({ message: "Internal Error" });
     }
 });
+
+
+
+// borrow multiple books
+route.patch("/books/bulk/borrow", async (req, res) => {
+    try {
+        
+        const book_ids = req.body.book_ids;
+        
+        if (!Array.isArray(book_ids) || book_ids.length === 0) {
+            res.status(400).json({
+                message: "Bad Request: Provide an array of bookIDs"
+            })
+        } 
+
+        const borrowed_books = await bookModelSchema.updateMany({ bookID: { $in: book_ids } },
+            { $set: { is_available : false } },
+            { new: true }) 
+        
+        if (borrowed_books) {
+            res.status(200).json({
+                message: "Successfully borrowed books",
+                no_of_books_borrowed: borrowed_books.matchedCount,
+                borrowed_book_ids: book_ids
+            })
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+});
+// return multiple books
+route.patch("/books/bulk/return", async (req, res) => {
+    try {
+        const book_ids = req.body.book_ids
+        
+        if (!Array.isArray(book_ids) || book_ids.length === 0) {
+            res.status(400).json({
+                message: "Bad Request: Provide an array of bookIDs"
+            })
+        }
+
+        const returned_books = await bookModelSchema.updateMany(
+            { bookID: { $in: book_ids } },
+            { $set: { is_available: true } },
+            {new:true}
+        )
+        if (returned_books) {
+            res.status(200).json({
+                message: "Successfully borrowed books",
+                no_of_books_: borrowed_books.matchedCount,
+                returned_book_ids: book_ids
+            })
+        }
+
+    } catch(err) {
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+  
+});
+
+
+// borrow a book
+route.patch("/books/:id/borrow", async (req, res) => {
+    try {
+        const book_id = parseInt(req.params.id);
+
+        let update_book = await bookModelSchema.findOneAndUpdate(
+            { bookID: book_id },
+            { $set: { is_available: false } },
+            { new: true }
+        )
+        if (update_book) {
+            res.status(200).json({
+                message: "book sucessfully borrowed",
+                content: update_book
+            })
+        };
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ message: "Internal Error" })
+    }
+});
+
+// return a book
+route.patch("/books/:id/return", async (req, res) => {
+    try {
+        const book_id = parseInt(req.params.id);
+
+        let update_book = await bookModelSchema.findOneAndUpdate(
+            { bookID: book_id },
+            { $set: { is_available: true } },
+            { new: true }
+        )
+        if (update_book) {
+            res.status(200).json({
+                message: "book sucessfully returned",
+                content: update_book
+            })
+        };
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ message: "Internal Error" })
+    }
+});
+
 
 
 module.exports = route

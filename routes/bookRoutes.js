@@ -91,15 +91,10 @@ route.delete("/books/:id", async (req, res)=>{
 // update book
 route.patch("/books/:id", async (req, res)=>{
     try{
+        const updates = req.body;
         const update_book = await bookModelSchema.findOneAndUpdate(
-            { bookID: req.params.id },
-            {   $set: {
-                title: newTitle,
-                author: newAuthor,
-                genre: newGenre,
-                publisher: newPublisher,
-                publication_date: newDate,
-                availability: newAvailability }},
+            { bookID: Number(req.params.id) },
+            {   $set: { ...updates }},
             { new: true }
         );
         let message = "Successfully Updated a Book!";

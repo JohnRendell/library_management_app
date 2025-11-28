@@ -12,6 +12,23 @@ if(process.env.NODE_ENV !== "production"){
     require("dotenv").config({ path: path.join(__dirname, "./keys.env") })
 }
 
+// ----- Swagger Setup -----
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Library Management API",
+      version: "1.0.0",
+      description: "IT elective 3 Library Management API"
+    }
+  },
+  apis: ["./routes/*.js"]
+});
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 //connect to mongo db
 const mongoose = require("mongoose");
 const uri = process.env.MONGODB_URI

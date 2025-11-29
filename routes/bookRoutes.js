@@ -1,10 +1,61 @@
-const express = require("express")
+﻿const express = require("express")
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
-
-
-
-// get all books
+/**
+ * @swagger
+ * /books:
+ *   get:
+ *     summary: Retrieve all books
+ *     tags: ["Books"]
+ *     description: Returns a list of all books sorted by newest first
+ *     parameters:
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           example: "Mystery"
+ *         description: Filter books by genre
+ *       - in: query
+ *         name: available
+ *         schema:
+ *           type: boolean
+ *           example: true
+ *         description: Filter books by availability
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           example: 10
+ *         description: Limit number of results
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved all books
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "OK: Successfully Retrieved all of the Books"
+ *                 check_books:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Book'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
+// get all books    
 route.get("/books", async (req, res)=>{
     try{
         const check_books = await bookModelSchema.find().sort({ createdAt: -1 })
@@ -25,6 +76,56 @@ route.get("/books", async (req, res)=>{
         res.status(500).json({ message: "Internal Error"})
     }
 });
+/**
+ * @swagger
+ * /books/{id}:
+ *   get:
+ *     summary: Retrieve book by ID
+ *     tags: ["Books"]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           minimum: 1
+ *           example: 101
+ *         description: Numeric Book ID to retrieve
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the book
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "OK: Successfully Retrieved the Book"
+ *                 check_book:
+ *                   $ref: '#/components/schemas/Book'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not Found: BookID Doesn't Exist!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 
 // get book by id
 route.get("/books/:id", async (req, res)=>{
@@ -46,6 +147,60 @@ route.get("/books/:id", async (req, res)=>{
         res.status(500).json({ message: "Internal Error"})
     }
 });
+/**
+ * @swagger
+ * /books:
+ *   post:
+ *     summary: Create a new book
+ *     tags: ["Books"]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             $ref: '#/components/schemas/BookInput'
+ *           example:
+ *             bookID: 102
+ *             title: "New Book Title"
+ *             author: "John Smith"
+ *             genre: "Fiction"
+ *             publisher: "ABC Press"
+ *             publication_date: "2023-10-25"
+ *             is_available: true
+ *     responses:
+ *       201:
+ *         description: Book created successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Created: Successfully Added a Book!"
+ *                 add_book:
+ *                   $ref: '#/components/schemas/Book'
+ *       400:
+ *         description: BookID already exists
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bad Request: BookID already exists!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 
 // add book
 route.post("/books", async (req, res)=>{
@@ -70,6 +225,156 @@ route.post("/books", async (req, res)=>{
         res.status(500).json({ message: "Internal Error"})
     }
 });
+/**
+ * @swagger
+ * /books/{id}:
+ *   delete:
+ *     summary: Delete a book by ID
+ *     tags: ["Books"]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           minimum: 1
+ *           example: 101
+ *         description: Numeric Book ID to delete
+ *     responses:
+ *       200:
+ *         description: Book deleted successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully Deleted a Book!"
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not Found: BookID Doesn't Exist!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
+// delete book
+route.delete("/books/:id", async (req, res)=>{
+    try {
+        const book_id = Number(req.params.id)
+        const delete_book = await bookModelSchema.findOneAndDelete({ bookID: book_id });
+        let message = "Successfully Deleted a Book!";
+
+        if(delete_book){
+            res.status(200).json({ message: message })
+        }
+        else{
+            res.status(400).json({ message: "Bad Request: Invalid Input!" })
+        }
+    }catch(err){
+        console.log(err)
+        res.status(500).json({ message: "First delete Internal Error"})
+    }
+});
+/**
+ * @swagger
+ * /books/{id}:
+ *   patch:
+ *     summary: Update a book by ID
+ *     tags: ["Books"]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           minimum: 1
+ *           example: 101
+ *         description: Numeric Book ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             $ref: '#/components/schemas/BookPatch'
+ *     responses:
+ *       200:
+ *         description: Book updated successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully Updated a Book!"
+ *                 content:
+ *                   $ref: '#/components/schemas/Book'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not Found: BookID Doesn't Exist!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
+
+// update book
+route.patch("/books/:id", async (req, res)=>{
+    try{
+        const updates = req.body;
+        const update_book = await bookModelSchema.findOneAndUpdate(
+            { bookID: Number(req.params.id) },
+            {   $set: { ...updates }},
+            { new: true }
+        );
+        let message = "Successfully Updated a Book!";
+
+        if(update_book){
+            res.status(200).json({
+                message: message,
+                content: update_book
+            })
+        }
+        else{
+            res.status(400).json({ message: "Bad Request: Invalid Input!" })
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+});
+
 
 // delete multiple book entries
 route.delete("/books/bulk", async (req, res) => {
@@ -101,82 +406,6 @@ route.delete("/books/bulk", async (req, res) => {
         res.status(500).json({ message: "Internal Error"})
     }
 })  
-
-
-// delete book
-route.delete("/books/:id", async (req, res)=>{
-    try {
-        const book_id = Number(req.params.id)
-        const delete_book = await bookModelSchema.findOneAndDelete({ bookID: book_id });
-        let message = "Successfully Deleted a Book!";
-
-        if(delete_book){
-            res.status(200).json({ message: message })
-        }
-        else{
-            res.status(400).json({ message: "Bad Request: Invalid Input!" })
-        }
-    }catch(err){
-        console.log(err)
-        res.status(500).json({ message: "First delete Internal Error"})
-    }
-});
-
-
-
-// update book
-route.patch("/books/:id", async (req, res)=>{
-    try{
-        const updates = req.body;
-        const update_book = await bookModelSchema.findOneAndUpdate(
-            { bookID: Number(req.params.id) },
-            {   $set: { ...updates }},
-            { new: true }
-        );
-        let message = "Successfully Updated a Book!";
-
-        if(update_book){
-            res.status(200).json({
-                message: message,
-                content: update_book
-            })
-        }
-        else{
-            res.status(400).json({ message: "Bad Request: Invalid Input!" })
-        }
-    }
-    catch(err){
-        console.log(err)
-        res.status(500).json({ message: "Internal Error"})
-    }
-});
-
-// update multiple books
-route.patch("/books/bulk", async (req, res) => {
-    try {
-        const { bookIDs, title, author, genre, publisher, publication_date, availability } = req.body;
-
-        // sa curl "bookIDs": [1, 3, 5], "title": "New_Title"
-        const updateResult = await bookModelSchema.updateMany(
-            { bookID: { $in: bookIDs } },
-            { $set: { title, author, genre, publisher, publication_date, availability } }
-        );
-
-        if (updateResult.matchedCount > 0) {
-            res.status(200).json({ 
-                message: "OK: Successfully Updated Selected Books!", 
-                matched: updateResult.matchedCount, 
-                modified: updateResult.modifiedCount 
-            });
-        } else {
-            res.status(400).json({ message: "Bad Request: No matching books found" });
-        }
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Internal Error" });
-    }
-});
-
 
 
 // borrow multiple books

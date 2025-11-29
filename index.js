@@ -22,9 +22,44 @@ const swaggerSpec = swaggerJsdoc({
       title: "Library Management API",
       version: "1.0.0",
       description: "IT elective 3 Library Management API"
+    },
+    components: {
+      schemas: {
+        BookInput: {
+          type: "object",
+          description: "Schema for creating a new book.",
+          required: [
+            "bookID", "title", "author", "genre", "publisher", 
+            "publication_date", "is_available"
+          ],
+          properties: {
+            bookID: { type: "integer", format: "int32", example: 101 },
+            title: { type: "string", example: "The Lost Library" },
+            author: { type: "string", example: "Jane Doe" },
+            genre: { type: "string", example: "Mystery" },
+            publisher: { type: "string", example: "Global Press" },
+            publication_date: { type: "string", format: "date", example: "2023-10-25" },
+            is_available: { type: "boolean", example: true }
+          }
+        },
+        Book: {
+          type: "object",
+          description: "The complete Book object returned by the API.",
+          properties: {
+            _id: { type: "string", readOnly: true, description: "MongoDB unique object ID." },
+            bookID: { type: "integer", format: "int32", example: 101 },
+            title: { type: "string", example: "The Lost Library" },
+            author: { type: "string", example: "Jane Doe" },
+            genre: { type: "string", example: "Mystery" },
+            publisher: { type: "string", example: "Global Press" },
+            publication_date: { type: "string", format: "date", example: "2023-10-25" },
+            is_available: { type: "boolean", example: true }
+          }
+        }
+      }
     }
   },
-  apis: ["./routes/*.js"]
+  apis: ["./routes/*.js"] 
 });
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

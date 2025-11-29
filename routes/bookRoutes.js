@@ -1,6 +1,8 @@
 ﻿const express = require("express")
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
+const userModelSchema = require("../models/userModel");
+
 /**
  * @swagger
  * /books:
@@ -544,26 +546,43 @@ route.delete("/books/bulk", async (req, res) => {
 // borrow multiple books
 route.patch("/books/bulk/borrow", async (req, res) => {
     try {
-        
-        const book_ids = req.body.book_ids;
-        
-        if (!Array.isArray(book_ids) || book_ids.length === 0) {
-            res.status(400).json({
-                message: "Bad Request: Provide an array of bookIDs"
-            })
-        } 
+        const borrower_id = req.body.user_id
+        let book_ids = req.body.book_ids;
+       
+        if (!Array.isArray(book_ids)) {
+            book_ids = [book_ids]
+        }
 
-        const borrowed_books = await bookModelSchema.updateMany({ bookID: { $in: book_ids } },
-            { $set: { is_available : false } },
+         const books = await bookModelSchema.find(
+        { bookID: { $in: book_ids } },     // match all bookIds
+        '_id'                             // only return the _id field
+        );
+
+        const book_object_ids = books.map(book => book._id);
+  
+
+        const borrowed_books = await bookModelSchema.updateMany(
+            { bookID: { $in: book_ids } },
+            { $set: { is_available: false } },
             { new: true }) 
         
-        if (borrowed_books) {
+        if (borrowed_books.acknowledged) {
+            const borrower = await userModelSchema.updateMany(
+            { userID: borrower_id },
+            { $push: { borrowedBooks: book_object_ids } },
+            { new: true } 
+            );
+
+            if (borrowed_books && borrower) {
             res.status(200).json({
                 message: "Successfully borrowed books",
                 no_of_books_borrowed: borrowed_books.matchedCount,
                 borrowed_book_ids: book_ids
             })
         }
+        }
+
+        
     }
     catch(err){
         console.log(err)
@@ -638,12 +657,12 @@ route.patch("/books/bulk/borrow", async (req, res) => {
 // return multiple books
 route.patch("/books/bulk/return", async (req, res) => {
     try {
-        const book_ids = req.body.book_ids
+
+        // const borrower_id = req.body.borrower_id
+        let book_ids = req.body.book_ids
         
         if (!Array.isArray(book_ids) || book_ids.length === 0) {
-            res.status(400).json({
-                message: "Bad Request: Provide an array of bookIDs"
-            })
+            book_ids = [book_ids]
         }
 
         const returned_books = await bookModelSchema.updateMany(
@@ -654,7 +673,7 @@ route.patch("/books/bulk/return", async (req, res) => {
         if (returned_books) {
             res.status(200).json({
                 message: "Successfully borrowed books",
-                no_of_books_: borrowed_books.matchedCount,
+                no_of_books_: returned_books.matchedCount,
                 returned_book_ids: book_ids
             })
         }
@@ -717,19 +736,29 @@ route.patch("/books/bulk/return", async (req, res) => {
  */
 
 // borrow a book
-route.patch("/books/:id/borrow", async (req, res) => {
+route.patch("/books/single/borrow", async (req, res) => {
     try {
-        const book_id = parseInt(req.params.id);
+        const borrower_id = req.body.userID
+        const book_id = parseInt(req.body.book_id)
 
-        let update_book = await bookModelSchema.findOneAndUpdate(
+        const updated_book = await bookModelSchema.findOneAndUpdate(
             { bookID: book_id },
             { $set: { is_available: false } },
             { new: true }
         )
-        if (update_book) {
+
+        const book_object_id = updated_book._id
+
+        const borrower = await userModelSchema.findOneAndUpdate(
+        { userID: borrower_id },
+        { $push: { borrowedBooks: book_object_id } },
+        { new: true } 
+        );
+        
+        if (updated_book && borrower) {
             res.status(200).json({
                 message: "book sucessfully borrowed",
-                content: update_book
+                content: updated_book
             })
         };
     }

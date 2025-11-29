@@ -62,15 +62,10 @@ const swaggerSpec = swaggerJsdoc({
   apis: ["./routes/*.js"] 
 });
 
-const options_for_swagger = {
-    customCss: '.swagger-ui .topbar { display: block }'
-}
-
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, options_for_swagger));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //connect to mongo db
 const mongoose = require("mongoose");
-const { options } = require("./routes/userRoutes");
 const uri = process.env.MONGODB_URI
 
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };

@@ -62,7 +62,15 @@ const swaggerSpec = swaggerJsdoc({
   apis: ["./routes/*.js"] 
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const swaggerOptions = {
+  customCss: ".swagger-ui .topbar { display: none }"
+};
+
+app.use(
+  "/api-docs",
+  swaggerUi.serveFiles(swaggerSpec),
+  swaggerUi.setup(swaggerSpec, swaggerOptions)
+);
 
 //connect to mongo db
 const mongoose = require("mongoose");

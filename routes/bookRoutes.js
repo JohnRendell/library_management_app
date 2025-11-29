@@ -374,7 +374,76 @@ route.patch("/books/:id", async (req, res)=>{
         res.status(500).json({ message: "Internal Error"})
     }
 });
-
+/**
+ * @swagger
+ * /books/bulk:
+ *   delete:
+ *     summary: Delete multiple books by IDs
+ *     tags: ["Books"]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             type: object
+ *             required:
+ *               - book_ids
+ *             properties:
+ *               book_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   format: int32
+ *                 minItems: 1
+ *                 maxItems: 50
+ *                 example: [101, 102, 103]
+ *           example:
+ *             book_ids: [101, 102, 103]
+ *     responses:
+ *       200:
+ *         description: Books deleted successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully Deleted Books!"
+ *                 deleted_ids:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                   example: [101, 102, 103]
+ *                 no_of_books_deleted:
+ *                   type: object
+ *                   properties:
+ *                     acknowledged:
+ *                       type: boolean
+ *                     deletedCount:
+ *                       type: integer
+ *                       example: 3
+ *       400:
+ *         description: Invalid book_ids array
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bad Request: Provide an array of bookIDs"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 
 // delete multiple book entries
 route.delete("/books/bulk", async (req, res) => {
@@ -406,7 +475,71 @@ route.delete("/books/bulk", async (req, res) => {
         res.status(500).json({ message: "Internal Error"})
     }
 })  
-
+/**
+ * @swagger
+ * /books/bulk/borrow:
+ *   patch:
+ *     summary: Borrow multiple books by IDs
+ *     tags: ["Books"]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             type: object
+ *             required:
+ *               - book_ids
+ *             properties:
+ *               book_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   format: int32
+ *                 minItems: 1
+ *                 maxItems: 20
+ *                 example: [101, 102, 103]
+ *           example:
+ *             book_ids: [101, 102, 103]
+ *     responses:
+ *       200:
+ *         description: Books borrowed successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully borrowed books"
+ *                 no_of_books_borrowed:
+ *                   type: integer
+ *                   example: 3
+ *                 borrowed_book_ids:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                   example: [101, 102, 103]
+ *       400:
+ *         description: Invalid book_ids array
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bad Request: Provide an array of bookIDs"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 
 // borrow multiple books
 route.patch("/books/bulk/borrow", async (req, res) => {
@@ -437,6 +570,71 @@ route.patch("/books/bulk/borrow", async (req, res) => {
         res.status(500).json({ message: "Internal Error"})
     }
 });
+/**
+ * @swagger
+ * /books/bulk/return:
+ *   patch:
+ *     summary: Return multiple borrowed books by IDs
+ *     tags: ["Books"]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             type: object
+ *             required:
+ *               - book_ids
+ *             properties:
+ *               book_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   format: int32
+ *                 minItems: 1
+ *                 maxItems: 20
+ *                 example: [101, 102, 103]
+ *           example:
+ *             book_ids: [101, 102, 103]
+ *     responses:
+ *       200:
+ *         description: Books returned successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully returned books"
+ *                 no_of_books_returned:
+ *                   type: integer
+ *                   example: 3
+ *                 returned_book_ids:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                   example: [101, 102, 103]
+ *       400:
+ *         description: Invalid book_ids array
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bad Request: Provide an array of bookIDs"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 // return multiple books
 route.patch("/books/bulk/return", async (req, res) => {
     try {
@@ -467,7 +665,56 @@ route.patch("/books/bulk/return", async (req, res) => {
     }
   
 });
-
+/**
+ * @swagger
+ * /books/{id}/borrow:
+ *   patch:
+ *     summary: Borrow a single book by ID
+ *     tags: ["Books"]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           minimum: 1
+ *           example: 101
+ *         description: Numeric Book ID to borrow
+ *     responses:
+ *       200:
+ *         description: Book borrowed successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Book successfully borrowed"
+ *                 content:
+ *                   $ref: '#/components/schemas/Book'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not Found: BookID Doesn't Exist!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 
 // borrow a book
 route.patch("/books/:id/borrow", async (req, res) => {
@@ -491,6 +738,56 @@ route.patch("/books/:id/borrow", async (req, res) => {
         res.status(500).json({ message: "Internal Error" })
     }
 });
+/**
+ * @swagger
+ * /books/{id}/return:
+ *   patch:
+ *     summary: Return a single borrowed book by ID
+ *     tags: ["Books"]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           minimum: 1
+ *           example: 101
+ *         description: Numeric Book ID to return
+ *     responses:
+ *       200:
+ *         description: Book returned successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Book successfully returned"
+ *                 content:
+ *                   $ref: '#/components/schemas/Book'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not Found: BookID Doesn't Exist!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
 
 // return a book
 route.patch("/books/:id/return", async (req, res) => {

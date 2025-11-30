@@ -2,6 +2,7 @@
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
 const userModelSchema = require("../models/userModel");
+const sanitize = require("sanitize-html")
 
 //middleware
 const { validate_book_fields } = require("../middleware/bookMiddleware")
@@ -136,14 +137,12 @@ route.get("/books/:id", async (req, res)=>{
     try {
         const book_id = sanitize(req.params.id);
         const check_book = await bookModelSchema.findOne({bookID: Number(book_id) })
-        let message = "OK: Successfully Retrieved the Book";
-        let status = 200;
 
         if(check_book){
-            res.status(status).json({ message: message, check_book })
+            return res.status(200).json({ message: "OK: Successfully Retrieved the Book", check_book: check_book })
         }
         else{
-            res.status(404).json({ message: "Not Found: BookID Doesn't Exist!" })
+            return res.status(404).json({ message: "Not Found: BookID Doesn't Exist!" })
         }
         
     }
@@ -368,6 +367,12 @@ route.patch("/books/borrow", async (req, res) => {
     try {
         const borrower_id = req.body.user_id;
         let book_ids = req.body.book_ids;
+
+        const check_user = await userModelSchema.findOne({ userID: borrower_id });
+
+        if(!check_user){
+            return res.status(404).json({ message: "User doesn't not exist" })
+        }
        
          // Validation Functions
         if (!Array.isArray(book_ids)) {
@@ -396,21 +401,23 @@ route.patch("/books/borrow", async (req, res) => {
             { $set: { is_available: false } },
             { new: true }) 
         
-        if (borrowed_books.acknowledged) {
+        if (borrowed_books) {
             const borrower = await userModelSchema.updateMany(
-            { userID: borrower_id },
-            { $push: { borrowedBooks: book_object_ids } },
-            { new: true } 
+                { userID: borrower_id },
+                { $push: { borrowedBooks: book_object_ids } },
+                { new: true } 
             );
 
             if (borrowed_books && borrower) {
-            res.status(200).json({
+                return res.status(200).json({
                 message: "Successfully borrowed books",
                 no_of_books_borrowed: borrowed_books.matchedCount,
                 borrowed_book_ids: book_ids
-            })
+                })
+            }
+            return res.status(400).json({ message: "failed to borrow books"})
         }
-        }
+        return res.status(400).json({ message: "failed to borrow books"})
 
         
     }

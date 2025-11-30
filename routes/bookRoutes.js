@@ -543,23 +543,31 @@ route.delete("/books/bulk", async (req, res) => {
  *                   example: "Internal Error"
  */
 
-// borrow multiple books
+// borrow one or multiple books
 route.patch("/books/bulk/borrow", async (req, res) => {
     try {
         const borrower_id = req.body.user_id
         let book_ids = req.body.book_ids;
        
+
         if (!Array.isArray(book_ids)) {
             book_ids = [book_ids]
         }
 
-         const books = await bookModelSchema.find(
-        { bookID: { $in: book_ids } },     // match all bookIds
-        '_id'                             // only return the _id field
+        const books = await bookModelSchema.find(
+            { bookID: { $in: book_ids } },
+            '_id bookID title is_available',
         );
 
         const book_object_ids = books.map(book => book._id);
-  
+        const unavailableBooks = books.filter(book => book.is_available === false);
+
+        if (unavailableBooks.length >= 1) {
+            return res.status(400).json({
+                message: "One or more books are not available",
+                BooksNotAvailable: unavailableBooks
+            })
+        }
 
         const borrowed_books = await bookModelSchema.updateMany(
             { bookID: { $in: book_ids } },
@@ -658,26 +666,40 @@ route.patch("/books/bulk/borrow", async (req, res) => {
 route.patch("/books/bulk/return", async (req, res) => {
     try {
 
-        // const borrower_id = req.body.borrower_id
+        const borrower_id = req.body.user_id
         let book_ids = req.body.book_ids
         
-        if (!Array.isArray(book_ids) || book_ids.length === 0) {
+        if (!Array.isArray(book_ids)) {
             book_ids = [book_ids]
         }
+
+         const books = await bookModelSchema.find(
+        { bookID: { $in: book_ids } },    
+        '_id'                             
+        );
+
+        const book_object_ids = books.map(book => book._id);
 
         const returned_books = await bookModelSchema.updateMany(
             { bookID: { $in: book_ids } },
             { $set: { is_available: true } },
             {new:true}
         )
-        if (returned_books) {
-            res.status(200).json({
-                message: "Successfully borrowed books",
-                no_of_books_: returned_books.matchedCount,
-                returned_book_ids: book_ids
-            })
+        if (returned_books.acknowledged) {
+            const borrower = await userModelSchema.updateMany(
+                { userID: borrower_id },
+                { $pull: { borrowedBooks: {$in: book_object_ids } } },
+                { new: true }
+            );
+             if (returned_books && borrower) {
+                res.status(200).json({
+                    message: "Successfully returned books",
+                    no_of_books_returned: returned_books.matchedCount,
+                    returned_book_ids: book_ids
+                })
+            }
         }
-
+           
     } catch(err) {
         console.log(err)
         res.status(500).json({ message: "Internal Error"})

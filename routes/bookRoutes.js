@@ -1,9 +1,8 @@
 ﻿const express = require("express")
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
+const userModelSchema = require("../models/userModel");
 
-//middleware
-const { validate_book_fields } = require("../middleware/bookMiddleware");
 /**
  * @swagger
  * /api/v1/books:
@@ -129,11 +128,11 @@ route.get("/books", async (req, res)=>{
  *                   type: string
  *                   example: "Internal Error"
  */
-
 // get book by id
 route.get("/books/:id", async (req, res)=>{
-    try{
-        const check_book = await bookModelSchema.findOne({bookID: Number(req.params.id) })
+    try {
+        const book_id = sanitize(req.params.id);
+        const check_book = await bookModelSchema.findOne({bookID: Number(book_id) })
         let message = "OK: Successfully Retrieved the Book";
         let status = 200;
 
@@ -218,7 +217,6 @@ route.get("/books/:id", async (req, res)=>{
  *                   type: string
  *                   example: 'Internal Error'
  */
-
 // add book
 route.post("/books", validate_book_fields, async (req, res)=>{
     try{
@@ -245,182 +243,15 @@ route.post("/books", validate_book_fields, async (req, res)=>{
 });
 /**
  * @swagger
- * /api/v1/books/{id}:
+ * /api/v1/books:
  *   delete:
- *     summary: Delete a book by ID
+ *     summary: Delete multiple books
  *     tags: ["Books"]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *           format: int32
- *           minimum: 1
- *           example: 101
- *         description: Numeric Book ID to delete
- *     responses:
- *       200:
- *         description: Book deleted successfully
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Successfully Deleted a Book!"
- *       404:
- *         description: Book not found
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Not Found: BookID Doesn't Exist!"
- *       500:
- *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
- */
-// delete book
-route.delete("/books/:id", async (req, res)=>{
-    try {
-        const book_id = Number(req.params.id)
-        const delete_book = await bookModelSchema.findOneAndDelete({ bookID: book_id });
-        let message = "Successfully Deleted a Book!";
-
-        if(delete_book){
-            res.status(200).json({ message: message })
-        }
-        else{
-            res.status(400).json({ message: "Bad Request: Invalid Input!" })
-        }
-    }catch(err){
-        console.log(err)
-        res.status(500).json({ message: "First delete Internal Error"})
-    }
-});
-/**
- * @swagger
- * /api/v1/books/{id}:
- *   patch:
- *     summary: Update a book by ID
- *     tags: ["Books"]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
+ *     description: Deletes books based on provided book IDs.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - author
- *               - genre
- *               - publisher
- *               - publication_date
- *               - is_available
- *             properties:
- *               title:
- *                 type: string
- *                 example: New Book Title
- *               author:
- *                 type: string
- *                 example: John Smith
- *               genre:
- *                 type: string
- *                 example: Fiction
- *               publisher:
- *                 type: string
- *                 example: ABC Press
- *               publication_date:
- *                 type: string
- *                 example: 2023-10-25
- *               is_available:
- *                 type: boolean
- *                 example: true
- *     responses:
- *       200:
- *         description: Book updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Successfully Updated a Book!"
- *                 content:
- *                   $ref: '#/components/schemas/Book'
- *       404:
- *         description: Book not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Not Found: BookID Doesn't Exist!"
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
- */
-
-
-// update book
-route.patch("/books/:id", validate_book_fields, async (req, res)=>{
-    try{
-        const { title, author, genre, publisher, publication_date, is_available } = req.body;
-        const availability = typeof is_available === "boolean" ? is_available : false;
-  
-        const update_book = await bookModelSchema.findOneAndUpdate(
-            { bookID: Number(req.params.id) },
-            { $set: { title: title, author: author, publisher: publisher, genre: genre, publication_date: publication_date, is_available: availability }},
-            { new: true }
-        );
-
-        if(!update_book){
-            return res.status(404).json({ message: "Not Found: BookID Doesn't Exist!" })
-        }
-        res.status(200).json({message: "Successfully Updated a book", content: update_book})
-    }
-    catch(err){
-        console.log(err)
-        return res.status(500).json({ message: "Internal Error"})
-    }
-});
-/**
- * @swagger
- * /api/books/bulk:
- *   delete:
- *     summary: Delete multiple books by IDs
- *     tags: ["Books"]
- *     requestBody:
- *       required: true
- *       content:
- *         "application/json":
  *           schema:
  *             type: object
  *             required:
@@ -430,68 +261,39 @@ route.patch("/books/:id", validate_book_fields, async (req, res)=>{
  *                 type: array
  *                 items:
  *                   type: integer
- *                   format: int32
- *                 minItems: 1
- *                 maxItems: 50
  *                 example: [101, 102, 103]
- *           example:
- *             book_ids: [101, 102, 103]
  *     responses:
  *       200:
- *         description: Books deleted successfully
+ *         description: Successfully deleted books
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Successfully Deleted Books!"
  *                 deleted_ids:
  *                   type: array
  *                   items:
  *                     type: integer
- *                   example: [101, 102, 103]
  *                 no_of_books_deleted:
  *                   type: object
- *                   properties:
- *                     acknowledged:
- *                       type: boolean
- *                     deletedCount:
- *                       type: integer
- *                       example: 3
  *       400:
- *         description: Invalid book_ids array
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bad Request: Provide an array of bookIDs"
+ *         description: Bad request – invalid or missing book IDs
  *       500:
  *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
  */
-
-// delete multiple book entries
-route.delete("/books/bulk", async (req, res) => {
+// delete one or multiple book entries
+route.delete("/books", async (req, res) => {
     try {
-        console.log("Atleast this works");
-
         
-        const book_ids = req.body.book_ids;
+        let book_ids = req.body.book_ids;
 
-         if (!Array.isArray(book_ids) || book_ids.length === 0) {
+        if ( book_ids.length === 0) {
             return res.status(400).json({ message: "Bad Request: Provide an array of bookIDs" });
+        }
+        if (!Array.isArray(book_ids)) {
+            book_ids = [book_ids]
         }
 
         const delete_book = await bookModelSchema.deleteMany({ bookID: { $in: book_ids } });
@@ -514,93 +316,100 @@ route.delete("/books/bulk", async (req, res) => {
 })  
 /**
  * @swagger
- * /api/v1/books/bulk/borrow:
+ * /api/v1/books/borrow:
  *   patch:
- *     summary: Borrow multiple books by IDs
+ *     summary: Borrow one or more books
  *     tags: ["Books"]
+ *     description: Marks books as borrowed and adds them to the user’s borrowed list.
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
+ *               - user_id
  *               - book_ids
  *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 3001
  *               book_ids:
  *                 type: array
  *                 items:
  *                   type: integer
- *                   format: int32
- *                 minItems: 1
- *                 maxItems: 20
- *                 example: [101, 102, 103]
- *           example:
- *             book_ids: [101, 102, 103]
+ *                 example: [101, 102]
  *     responses:
  *       200:
- *         description: Books borrowed successfully
+ *         description: Successfully borrowed books
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Successfully borrowed books"
  *                 no_of_books_borrowed:
  *                   type: integer
- *                   example: 3
  *                 borrowed_book_ids:
  *                   type: array
  *                   items:
  *                     type: integer
- *                   example: [101, 102, 103]
  *       400:
- *         description: Invalid book_ids array
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bad Request: Provide an array of bookIDs"
+ *         description: One or more books are not available
  *       500:
  *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
  */
-
-// borrow multiple books
-route.patch("/books/bulk/borrow", async (req, res) => {
+// borrow one or multiple books
+route.patch("/books/borrow", async (req, res) => {
     try {
-        
-        const book_ids = req.body.book_ids;
-        
-        if (!Array.isArray(book_ids) || book_ids.length === 0) {
-            res.status(400).json({
-                message: "Bad Request: Provide an array of bookIDs"
-            })
-        } 
+        const borrower_id = req.body.user_id;
+        let book_ids = req.body.book_ids;
+       
+         // Validation Functions
+        if (!Array.isArray(book_ids)) {
+            book_ids = [book_ids]
+        }
 
-        const borrowed_books = await bookModelSchema.updateMany({ bookID: { $in: book_ids } },
-            { $set: { is_available : false } },
+        const books = await bookModelSchema.find(
+            { bookID: { $in: book_ids } },
+            '_id bookID title is_available',
+        );
+
+        const unavailableBooks = books.filter(book => book.is_available === false);
+
+        if (unavailableBooks.length >= 1) {
+            return res.status(400).json({
+                message: "One or more books are not available",
+                BooksNotAvailable: unavailableBooks
+            })
+        }
+
+        // Update functions
+        const book_object_ids = books.map(book => book._id);
+        
+        const borrowed_books = await bookModelSchema.updateMany(
+            { bookID: { $in: book_ids } },
+            { $set: { is_available: false } },
             { new: true }) 
         
-        if (borrowed_books) {
+        if (borrowed_books.acknowledged) {
+            const borrower = await userModelSchema.updateMany(
+            { userID: borrower_id },
+            { $push: { borrowedBooks: book_object_ids } },
+            { new: true } 
+            );
+
+            if (borrowed_books && borrower) {
             res.status(200).json({
                 message: "Successfully borrowed books",
                 no_of_books_borrowed: borrowed_books.matchedCount,
                 borrowed_book_ids: book_ids
             })
         }
+        }
+
+        
     }
     catch(err){
         console.log(err)
@@ -609,77 +418,99 @@ route.patch("/books/bulk/borrow", async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/books/bulk/return:
+ * /api/v1/books/return:
  *   patch:
- *     summary: Return multiple borrowed books by IDs
+ *     summary: Return borrowed books
  *     tags: ["Books"]
+ *     description: Marks books as returned and removes them from the user’s borrowed list.
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
+ *               - user_id
  *               - book_ids
  *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 3001
  *               book_ids:
  *                 type: array
  *                 items:
  *                   type: integer
- *                   format: int32
- *                 minItems: 1
- *                 maxItems: 20
- *                 example: [101, 102, 103]
- *           example:
- *             book_ids: [101, 102, 103]
+ *                 example: [101, 102]
  *     responses:
  *       200:
- *         description: Books returned successfully
+ *         description: Successfully returned books
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Successfully returned books"
  *                 no_of_books_returned:
  *                   type: integer
- *                   example: 3
  *                 returned_book_ids:
  *                   type: array
  *                   items:
  *                     type: integer
- *                   example: [101, 102, 103]
  *       400:
- *         description: Invalid book_ids array
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bad Request: Provide an array of bookIDs"
+ *         description: User did not borrow these books or one is already returned
  *       500:
  *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
  */
-// return multiple books
-route.patch("/books/bulk/return", async (req, res) => {
+// return one or multiple books
+route.patch("/books/return", async (req, res) => {
     try {
-        const book_ids = req.body.book_ids
-        
-        if (!Array.isArray(book_ids) || book_ids.length === 0) {
-            res.status(400).json({
-                message: "Bad Request: Provide an array of bookIDs"
+
+        const borrower_id = req.body.user_id;
+        let book_ids = req.body.book_ids;
+
+        // Validation Functions
+        const user = await userModelSchema.findOne({
+            userID : borrower_id
+        })
+
+        const userWithBooks = await user.populate("borrowedBooks");
+
+        if (!userWithBooks.borrowedBooks || userWithBooks.borrowedBooks.length === 0) {
+        return res.status(400).json({ message: "User has no borrowed books" });
+}
+        const borrowedBooks = userWithBooks.borrowedBooks;
+        const borrowedBooksIds = borrowedBooks.map(book => book.bookID);
+
+        const allExist = book_ids.every(item => borrowedBooksIds.includes(item));
+
+        if (!allExist) {
+            return res.status(400).json({
+                message: "User is trying to return a book that was not borrowed",
+                userId: borrower_id,
+                bookIdsToReturn: book_ids,
+                borrowedBooks: borrowedBooks
+            });
+        }
+
+
+        // Update functions
+        if (!Array.isArray(book_ids)) {
+            book_ids = [book_ids]
+        }
+
+         const books = await bookModelSchema.find(
+        { bookID: { $in: book_ids } },    
+        '_id bookID title is_available'                             
+        );
+
+        const book_object_ids = books.map(book => book._id);
+        const availableBooks = books.filter(book => book.is_available === true);
+
+        if (availableBooks.length >= 1) {
+            return res.status(400).json({
+                message: "One or more books already returned",
+                Books: availableBooks
             })
         }
 
@@ -688,14 +519,21 @@ route.patch("/books/bulk/return", async (req, res) => {
             { $set: { is_available: true } },
             {new:true}
         )
-        if (returned_books) {
-            res.status(200).json({
-                message: "Successfully borrowed books",
-                no_of_books_: borrowed_books.matchedCount,
-                returned_book_ids: book_ids
-            })
+        if (returned_books.acknowledged) {
+            const borrower = await userModelSchema.updateMany(
+                { userID: borrower_id },
+                { $pull: { borrowedBooks: {$in: book_object_ids } } },
+                { new: true }
+            );
+             if (returned_books && borrower) {
+                res.status(200).json({
+                    message: "Successfully returned books",
+                    no_of_books_returned: returned_books.matchedCount,
+                    returned_book_ids: book_ids
+                })
+            }
         }
-
+           
     } catch(err) {
         console.log(err)
         res.status(500).json({ message: "Internal Error"})
@@ -704,9 +542,9 @@ route.patch("/books/bulk/return", async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/books/{id}/borrow:
+ * /api/v1/books/{id}:
  *   patch:
- *     summary: Borrow a single book by ID
+ *     summary: Update a book by ID
  *     tags: ["Books"]
  *     parameters:
  *       - in: path
@@ -717,10 +555,16 @@ route.patch("/books/bulk/return", async (req, res) => {
  *           format: int32
  *           minimum: 1
  *           example: 101
- *         description: Numeric Book ID to borrow
+ *         description: Numeric Book ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             $ref: '#/components/schemas/BookPatch'
  *     responses:
  *       200:
- *         description: Book borrowed successfully
+ *         description: Book updated successfully
  *         content:
  *           "application/json":
  *             schema:
@@ -728,7 +572,7 @@ route.patch("/books/bulk/return", async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Book successfully borrowed"
+ *                   example: "Successfully Updated a Book!"
  *                 content:
  *                   $ref: '#/components/schemas/Book'
  *       404:
@@ -752,103 +596,32 @@ route.patch("/books/bulk/return", async (req, res) => {
  *                   type: string
  *                   example: "Internal Error"
  */
-
-// borrow a book
-route.patch("/books/:id/borrow", async (req, res) => {
-    try {
-        const book_id = parseInt(req.params.id);
-
-        let update_book = await bookModelSchema.findOneAndUpdate(
-            { bookID: book_id },
-            { $set: { is_available: false } },
+// update book
+route.patch("/books/:id", async (req, res)=>{
+    try{
+        const updates = req.body;
+        const update_book = await bookModelSchema.findOneAndUpdate(
+            { bookID: Number(req.params.id) },
+            {   $set: { ...updates }},
             { new: true }
-        )
-        if (update_book) {
+        );
+        let message = "Successfully Updated a Book!";
+
+        if(update_book){
             res.status(200).json({
-                message: "book sucessfully borrowed",
+                message: message,
                 content: update_book
             })
-        };
+        }
+        else{
+            res.status(400).json({ message: "Bad Request: Invalid Input!" })
+        }
     }
-    catch (err) {
+    catch(err){
         console.log(err)
-        res.status(500).json({ message: "Internal Error" })
+        res.status(500).json({ message: "Internal Error"})
     }
 });
-/**
- * @swagger
- * /api/v1/books/{id}/return:
- *   patch:
- *     summary: Return a single borrowed book by ID
- *     tags: ["Books"]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *           format: int32
- *           minimum: 1
- *           example: 101
- *         description: Numeric Book ID to return
- *     responses:
- *       200:
- *         description: Book returned successfully
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Book successfully returned"
- *                 content:
- *                   $ref: '#/components/schemas/Book'
- *       404:
- *         description: Book not found
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Not Found: BookID Doesn't Exist!"
- *       500:
- *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
- */
-
-// return a book
-route.patch("/books/:id/return", async (req, res) => {
-    try {
-        const book_id = parseInt(req.params.id);
-
-        let update_book = await bookModelSchema.findOneAndUpdate(
-            { bookID: book_id },
-            { $set: { is_available: true } },
-            { new: true }
-        )
-        if (update_book) {
-            res.status(200).json({
-                message: "book sucessfully returned",
-                content: update_book
-            })
-        };
-    }
-    catch (err) {
-        console.log(err)
-        res.status(500).json({ message: "Internal Error" })
-    }
-});
-
 
 
 module.exports = route

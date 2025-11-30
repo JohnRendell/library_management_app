@@ -119,7 +119,7 @@ route.patch("/users/:id", async (req, res)=>{
         if(!username || !password){
             return res.status(400).json({ message: "Fields are empty" })
         }
-
+        
         const salt = await bcrypt.genSalt(10)
         const hashed_pass = await bcrypt.hash(password, salt)
        

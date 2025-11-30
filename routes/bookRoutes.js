@@ -3,6 +3,9 @@ const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
 const userModelSchema = require("../models/userModel");
 
+//middleware
+const { validate_book_fields } = require("../middleware/bookMiddleware")
+
 /**
  * @swagger
  * /api/v1/books:

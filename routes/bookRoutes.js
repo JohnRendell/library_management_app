@@ -227,7 +227,6 @@ route.post("/books", async (req, res)=>{
         res.status(500).json({ message: "Internal Error"})
     }
 });
-
 /**
  * @swagger
  * /books/bulk:
@@ -298,9 +297,8 @@ route.post("/books", async (req, res)=>{
  *                   type: string
  *                   example: "Internal Error"
  */
-
 // delete one or multiple book entries
-route.delete("/books/bulk", async (req, res) => {
+route.delete("/books", async (req, res) => {
     try {
         console.log("Atleast this works");
 
@@ -332,91 +330,6 @@ route.delete("/books/bulk", async (req, res) => {
         res.status(500).json({ message: "Internal Error"})
     }
 })  
-
-/**
- * @swagger
- * /books/{id}:
- *   patch:
- *     summary: Update a book by ID
- *     tags: ["Books"]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *           format: int32
- *           minimum: 1
- *           example: 101
- *         description: Numeric Book ID to update
- *     requestBody:
- *       required: true
- *       content:
- *         "application/json":
- *           schema:
- *             $ref: '#/components/schemas/BookPatch'
- *     responses:
- *       200:
- *         description: Book updated successfully
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Successfully Updated a Book!"
- *                 content:
- *                   $ref: '#/components/schemas/Book'
- *       404:
- *         description: Book not found
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Not Found: BookID Doesn't Exist!"
- *       500:
- *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
- */
-
-// update book
-route.patch("/books/:id", async (req, res)=>{
-    try{
-        const updates = req.body;
-        const update_book = await bookModelSchema.findOneAndUpdate(
-            { bookID: Number(req.params.id) },
-            {   $set: { ...updates }},
-            { new: true }
-        );
-        let message = "Successfully Updated a Book!";
-
-        if(update_book){
-            res.status(200).json({
-                message: message,
-                content: update_book
-            })
-        }
-        else{
-            res.status(400).json({ message: "Bad Request: Invalid Input!" })
-        }
-    }
-    catch(err){
-        console.log(err)
-        res.status(500).json({ message: "Internal Error"})
-    }
-});
-
 /**
  * @swagger
  * /books/bulk/borrow:
@@ -482,9 +395,8 @@ route.patch("/books/:id", async (req, res)=>{
  *                   type: string
  *                   example: "Internal Error"
  */
-
 // borrow one or multiple books
-route.patch("/books/bulk/borrow", async (req, res) => {
+route.patch("/books/borrow", async (req, res) => {
     try {
         const borrower_id = req.body.user_id
         let book_ids = req.body.book_ids;
@@ -605,7 +517,7 @@ route.patch("/books/bulk/borrow", async (req, res) => {
  *                   example: "Internal Error"
  */
 // return one or multiple books
-route.patch("/books/bulk/return", async (req, res) => {
+route.patch("/books/return", async (req, res) => {
     try {
 
         const borrower_id = req.body.user_id
@@ -682,6 +594,91 @@ route.patch("/books/bulk/return", async (req, res) => {
     }
   
 });
+
+/**
+ * @swagger
+ * /books/{id}:
+ *   patch:
+ *     summary: Update a book by ID
+ *     tags: ["Books"]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           minimum: 1
+ *           example: 101
+ *         description: Numeric Book ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         "application/json":
+ *           schema:
+ *             $ref: '#/components/schemas/BookPatch'
+ *     responses:
+ *       200:
+ *         description: Book updated successfully
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully Updated a Book!"
+ *                 content:
+ *                   $ref: '#/components/schemas/Book'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not Found: BookID Doesn't Exist!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           "application/json":
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Error"
+ */
+// update book
+route.patch("/books/:id", async (req, res)=>{
+    try{
+        const updates = req.body;
+        const update_book = await bookModelSchema.findOneAndUpdate(
+            { bookID: Number(req.params.id) },
+            {   $set: { ...updates }},
+            { new: true }
+        );
+        let message = "Successfully Updated a Book!";
+
+        if(update_book){
+            res.status(200).json({
+                message: message,
+                content: update_book
+            })
+        }
+        else{
+            res.status(400).json({ message: "Bad Request: Invalid Input!" })
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({ message: "Internal Error"})
+    }
+});
+
+
 
 
 

@@ -1,9 +1,12 @@
 ﻿const express = require("express")
 const route = express.Router()
 const bookModelSchema = require("../models/bookModel");
+
+//middleware
+const { validate_book_fields } = require("../middleware/bookMiddleware");
 /**
  * @swagger
- * /books:
+ * /api/v1/books:
  *   get:
  *     summary: Retrieve all books
  *     tags: ["Books"]
@@ -78,7 +81,7 @@ route.get("/books", async (req, res)=>{
 });
 /**
  * @swagger
- * /books/{id}:
+ * /api/v1/books/{id}:
  *   get:
  *     summary: Retrieve book by ID
  *     tags: ["Books"]
@@ -149,85 +152,100 @@ route.get("/books/:id", async (req, res)=>{
 });
 /**
  * @swagger
- * /books:
+ * /api/v1/books:
  *   post:
  *     summary: Create a new book
  *     tags: ["Books"]
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/BookInput'
- *           example:
- *             bookID: 102
- *             title: "New Book Title"
- *             author: "John Smith"
- *             genre: "Fiction"
- *             publisher: "ABC Press"
- *             publication_date: "2023-10-25"
- *             is_available: true
+ *             type: object
+ *             required:
+ *               - title
+ *               - author
+ *               - genre
+ *               - publisher
+ *               - publication_date
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: New Book Title
+ *               author:
+ *                 type: string
+ *                 example: John Smith
+ *               genre:
+ *                 type: string
+ *                 example: Fiction
+ *               publisher:
+ *                 type: string
+ *                 example: ABC Press
+ *               publication_date:
+ *                 type: string
+ *                 example: 2023-10-25
  *     responses:
  *       201:
  *         description: Book created successfully
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Created: Successfully Added a Book!"
+ *                   example: 'Created: Successfully Added a Book!'
  *                 add_book:
  *                   $ref: '#/components/schemas/Book'
  *       400:
  *         description: BookID already exists
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Bad Request: BookID already exists!"
+ *                   example: 'Bad Request: BookID already exists!'
  *       500:
  *         description: Internal server error
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Internal Error"
+ *                   example: 'Internal Error'
  */
 
 // add book
-route.post("/books", async (req, res)=>{
+route.post("/books", validate_book_fields, async (req, res)=>{
     try{
-        const add_book = new bookModelSchema(req.body);
-        const check_book = await bookModelSchema.find();
+        const { title, author, genre, publisher, publication_date } = req.body;
+
+        const check_book = await bookModelSchema.find({}, { bookID: 1, _id: 0 });
         let all_bookIDs = check_book.map(book => book.bookID);
+        let newBookID = 1;
 
-        let message = "Created: Successfully Added a Book!";
-        let status = 201;
+        while (all_bookIDs.includes(newBookID)) {
+            newBookID++;
+        }
 
-        if (all_bookIDs.includes(add_book.bookID)) {
-        res.status(400).json({ message: "Bad Request: BookID already exists!" });
+        let isBookCreated = await bookModelSchema.create({ bookID: newBookID, title: title, author: author, genre: genre, publisher: publisher, publication_date: publication_date, is_available: true })
+
+        if(!isBookCreated){
+            return res.status(400).json({ message: "Book creation failed, try again"})
         }
-        else{
-            await add_book.save();
-            res.status(status).json({ message: message, add_book })
-        }
+        return res.status(201).json({ message: "Created book successfully", add_books: isBookCreated })
     }
     catch(err){
-        console.log(err)
-        res.status(500).json({ message: "Internal Error"})
+        return res.status(500).json({ message: "Internal Error", logs: err })
     }
 });
 /**
  * @swagger
- * /books/{id}:
+ * /api/v1/books/{id}:
  *   delete:
  *     summary: Delete a book by ID
  *     tags: ["Books"]
@@ -293,7 +311,7 @@ route.delete("/books/:id", async (req, res)=>{
 });
 /**
  * @swagger
- * /books/{id}:
+ * /api/v1/books/{id}:
  *   patch:
  *     summary: Update a book by ID
  *     tags: ["Books"]
@@ -303,21 +321,43 @@ route.delete("/books/:id", async (req, res)=>{
  *         required: true
  *         schema:
  *           type: integer
- *           format: int32
- *           minimum: 1
- *           example: 101
- *         description: Numeric Book ID to update
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/BookPatch'
+ *             type: object
+ *             required:
+ *               - title
+ *               - author
+ *               - genre
+ *               - publisher
+ *               - publication_date
+ *               - is_available
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: New Book Title
+ *               author:
+ *                 type: string
+ *                 example: John Smith
+ *               genre:
+ *                 type: string
+ *                 example: Fiction
+ *               publisher:
+ *                 type: string
+ *                 example: ABC Press
+ *               publication_date:
+ *                 type: string
+ *                 example: 2023-10-25
+ *               is_available:
+ *                 type: boolean
+ *                 example: true
  *     responses:
  *       200:
  *         description: Book updated successfully
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
@@ -329,7 +369,7 @@ route.delete("/books/:id", async (req, res)=>{
  *       404:
  *         description: Book not found
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
@@ -339,7 +379,7 @@ route.delete("/books/:id", async (req, res)=>{
  *       500:
  *         description: Internal server error
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
@@ -348,35 +388,32 @@ route.delete("/books/:id", async (req, res)=>{
  *                   example: "Internal Error"
  */
 
+
 // update book
-route.patch("/books/:id", async (req, res)=>{
+route.patch("/books/:id", validate_book_fields, async (req, res)=>{
     try{
-        const updates = req.body;
+        const { title, author, genre, publisher, publication_date, is_available } = req.body;
+        const availability = typeof is_available === "boolean" ? is_available : false;
+  
         const update_book = await bookModelSchema.findOneAndUpdate(
             { bookID: Number(req.params.id) },
-            {   $set: { ...updates }},
+            { $set: { title: title, author: author, publisher: publisher, genre: genre, publication_date: publication_date, is_available: availability }},
             { new: true }
         );
-        let message = "Successfully Updated a Book!";
 
-        if(update_book){
-            res.status(200).json({
-                message: message,
-                content: update_book
-            })
+        if(!update_book){
+            return res.status(404).json({ message: "Not Found: BookID Doesn't Exist!" })
         }
-        else{
-            res.status(400).json({ message: "Bad Request: Invalid Input!" })
-        }
+        res.status(200).json({message: "Successfully Updated a book", content: update_book})
     }
     catch(err){
         console.log(err)
-        res.status(500).json({ message: "Internal Error"})
+        return res.status(500).json({ message: "Internal Error"})
     }
 });
 /**
  * @swagger
- * /books/bulk:
+ * /api/books/bulk:
  *   delete:
  *     summary: Delete multiple books by IDs
  *     tags: ["Books"]
@@ -477,7 +514,7 @@ route.delete("/books/bulk", async (req, res) => {
 })  
 /**
  * @swagger
- * /books/bulk/borrow:
+ * /api/v1/books/bulk/borrow:
  *   patch:
  *     summary: Borrow multiple books by IDs
  *     tags: ["Books"]
@@ -572,7 +609,7 @@ route.patch("/books/bulk/borrow", async (req, res) => {
 });
 /**
  * @swagger
- * /books/bulk/return:
+ * /api/v1/books/bulk/return:
  *   patch:
  *     summary: Return multiple borrowed books by IDs
  *     tags: ["Books"]
@@ -667,7 +704,7 @@ route.patch("/books/bulk/return", async (req, res) => {
 });
 /**
  * @swagger
- * /books/{id}/borrow:
+ * /api/v1/books/{id}/borrow:
  *   patch:
  *     summary: Borrow a single book by ID
  *     tags: ["Books"]
@@ -740,7 +777,7 @@ route.patch("/books/:id/borrow", async (req, res) => {
 });
 /**
  * @swagger
- * /books/{id}/return:
+ * /api/v1/books/{id}/return:
  *   patch:
  *     summary: Return a single borrowed book by ID
  *     tags: ["Books"]

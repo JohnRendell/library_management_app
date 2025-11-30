@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
 const database = require("./database_config")
-const bookModelSchema = require("../models/bookModel");
-const { Schema } = mongoose;
 
 const userModelSchema = new mongoose.Schema({
     userID: { type: Number, required: true },

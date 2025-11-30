@@ -5,7 +5,7 @@ const userModelSchema = require("../models/userModel");
 
 /**
  * @swagger
- * /books:
+ * /api/v1/books:
  *   get:
  *     summary: Retrieve all books
  *     tags: ["Books"]
@@ -80,7 +80,7 @@ route.get("/books", async (req, res)=>{
 });
 /**
  * @swagger
- * /books/{id}:
+ * /api/v1/books/{id}:
  *   get:
  *     summary: Retrieve book by ID
  *     tags: ["Books"]
@@ -151,7 +151,7 @@ route.get("/books/:id", async (req, res)=>{
 });
 /**
  * @swagger
- * /books:
+ * /api/v1/books:
  *   post:
  *     summary: Create a new book
  *     tags: ["Books"]
@@ -228,14 +228,15 @@ route.post("/books", async (req, res)=>{
 });
 /**
  * @swagger
- * /books:
+ * /api/v1/books:
  *   delete:
- *     summary: Delete one or more books by IDs
+ *     summary: Delete multiple books
  *     tags: ["Books"]
+ *     description: Deletes books based on provided book IDs.
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -245,56 +246,27 @@ route.post("/books", async (req, res)=>{
  *                 type: array
  *                 items:
  *                   type: integer
- *                   format: int32
- *                 minItems: 1
- *                 maxItems: 50
  *                 example: [101, 102, 103]
- *           example:
- *             book_ids: [101, 102, 103]
  *     responses:
  *       200:
- *         description: Books deleted successfully
+ *         description: Successfully deleted books
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Successfully Deleted Books!"
  *                 deleted_ids:
  *                   type: array
  *                   items:
  *                     type: integer
- *                   example: [101, 102, 103]
  *                 no_of_books_deleted:
  *                   type: object
- *                   properties:
- *                     acknowledged:
- *                       type: boolean
- *                     deletedCount:
- *                       type: integer
- *                       example: 3
  *       400:
- *         description: Invalid book_ids array
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bad Request: Provide an array of bookIDs"
+ *         description: Bad request – invalid or missing book IDs
  *       500:
  *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
  */
 // delete one or multiple book entries
 route.delete("/books", async (req, res) => {
@@ -329,68 +301,49 @@ route.delete("/books", async (req, res) => {
 })  
 /**
  * @swagger
- * /books/borrow:
+ * /api/v1/books/borrow:
  *   patch:
- *     summary: Borrow one or more books by IDs
+ *     summary: Borrow one or more books
  *     tags: ["Books"]
+ *     description: Marks books as borrowed and adds them to the user’s borrowed list.
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
+ *               - user_id
  *               - book_ids
  *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 3001
  *               book_ids:
  *                 type: array
  *                 items:
  *                   type: integer
- *                   format: int32
- *                 minItems: 1
- *                 maxItems: 20
- *                 example: [101, 102, 103]
- *           example:
- *             book_ids: [101, 102, 103]
+ *                 example: [101, 102]
  *     responses:
  *       200:
- *         description: Books borrowed successfully
+ *         description: Successfully borrowed books
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Successfully borrowed books"
  *                 no_of_books_borrowed:
  *                   type: integer
- *                   example: 3
  *                 borrowed_book_ids:
  *                   type: array
  *                   items:
  *                     type: integer
- *                   example: [101, 102, 103]
  *       400:
- *         description: Invalid book_ids array
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bad Request: Provide an array of bookIDs"
+ *         description: One or more books are not available
  *       500:
  *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
  */
 // borrow one or multiple books
 route.patch("/books/borrow", async (req, res) => {
@@ -450,68 +403,49 @@ route.patch("/books/borrow", async (req, res) => {
 });
 /**
  * @swagger
- * /books/return:
+ * /api/v1/books/return:
  *   patch:
- *     summary: Return one or more borrowed books by IDs
+ *     summary: Return borrowed books
  *     tags: ["Books"]
+ *     description: Marks books as returned and removes them from the user’s borrowed list.
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
+ *               - user_id
  *               - book_ids
  *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 3001
  *               book_ids:
  *                 type: array
  *                 items:
  *                   type: integer
- *                   format: int32
- *                 minItems: 1
- *                 maxItems: 20
- *                 example: [101, 102, 103]
- *           example:
- *             book_ids: [101, 102, 103]
+ *                 example: [101, 102]
  *     responses:
  *       200:
- *         description: Books returned successfully
+ *         description: Successfully returned books
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Successfully returned books"
  *                 no_of_books_returned:
  *                   type: integer
- *                   example: 3
  *                 returned_book_ids:
  *                   type: array
  *                   items:
  *                     type: integer
- *                   example: [101, 102, 103]
  *       400:
- *         description: Invalid book_ids array
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bad Request: Provide an array of bookIDs"
+ *         description: User did not borrow these books or one is already returned
  *       500:
  *         description: Internal server error
- *         content:
- *           "application/json":
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Internal Error"
  */
 // return one or multiple books
 route.patch("/books/return", async (req, res) => {
@@ -593,7 +527,7 @@ route.patch("/books/return", async (req, res) => {
 });
 /**
  * @swagger
- * /books/{id}:
+ * /api/v1/books/{id}:
  *   patch:
  *     summary: Update a book by ID
  *     tags: ["Books"]

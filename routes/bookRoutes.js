@@ -569,14 +569,25 @@ route.patch("/books/return", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         "application/json":
+ *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/BookPatch'
+ *           examples:
+ *             updateBook:
+ *               summary: Example book update
+ *               value:
+ *                 bookID: 101
+ *                 title: "The Lost Library"
+ *                 author: "Jane Doe"
+ *                 genre: "Mystery"
+ *                 publisher: "Global Press"
+ *                 publication_date: "2023-10-25"
+ *                 is_available: true
  *     responses:
  *       200:
  *         description: Book updated successfully
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
@@ -588,7 +599,7 @@ route.patch("/books/return", async (req, res) => {
  *       404:
  *         description: Book not found
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:
@@ -598,7 +609,7 @@ route.patch("/books/return", async (req, res) => {
  *       500:
  *         description: Internal server error
  *         content:
- *           "application/json":
+ *           application/json:
  *             schema:
  *               type: object
  *               properties:

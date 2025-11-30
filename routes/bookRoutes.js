@@ -230,7 +230,7 @@ route.post("/books", async (req, res)=>{
  * @swagger
  * /books:
  *   delete:
- *     summary: Delete multiple books by IDs
+ *     summary: Delete one or more books by IDs
  *     tags: ["Books"]
  *     requestBody:
  *       required: true
@@ -299,8 +299,8 @@ route.post("/books", async (req, res)=>{
 // delete one or multiple book entries
 route.delete("/books", async (req, res) => {
     try {
-
-        let book_ids = sanitize(req.body.book_ids);
+        
+        let book_ids = req.body.book_ids;
 
         if ( book_ids.length === 0) {
             return res.status(400).json({ message: "Bad Request: Provide an array of bookIDs" });
@@ -331,7 +331,7 @@ route.delete("/books", async (req, res) => {
  * @swagger
  * /books/borrow:
  *   patch:
- *     summary: Borrow multiple books by IDs
+ *     summary: Borrow one or more books by IDs
  *     tags: ["Books"]
  *     requestBody:
  *       required: true
@@ -452,7 +452,7 @@ route.patch("/books/borrow", async (req, res) => {
  * @swagger
  * /books/return:
  *   patch:
- *     summary: Return multiple borrowed books by IDs
+ *     summary: Return one or more borrowed books by IDs
  *     tags: ["Books"]
  *     requestBody:
  *       required: true

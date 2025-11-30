@@ -549,7 +549,7 @@ route.patch("/books/bulk/borrow", async (req, res) => {
         const borrower_id = req.body.user_id
         let book_ids = req.body.book_ids;
        
-
+         // Validation Functions
         if (!Array.isArray(book_ids)) {
             book_ids = [book_ids]
         }
@@ -559,7 +559,6 @@ route.patch("/books/bulk/borrow", async (req, res) => {
             '_id bookID title is_available',
         );
 
-        const book_object_ids = books.map(book => book._id);
         const unavailableBooks = books.filter(book => book.is_available === false);
 
         if (unavailableBooks.length >= 1) {
@@ -569,6 +568,9 @@ route.patch("/books/bulk/borrow", async (req, res) => {
             })
         }
 
+        // Update functions
+        const book_object_ids = books.map(book => book._id);
+        
         const borrowed_books = await bookModelSchema.updateMany(
             { bookID: { $in: book_ids } },
             { $set: { is_available: false } },
@@ -668,17 +670,51 @@ route.patch("/books/bulk/return", async (req, res) => {
 
         const borrower_id = req.body.user_id
         let book_ids = req.body.book_ids
-        
+
+        // Validation Functions
+        const user = await userModelSchema.findOne({
+            userID : borrower_id
+        })
+
+        const userWithBooks = await user.populate("borrowedBooks");
+
+        if (!userWithBooks.borrowedBooks || userWithBooks.borrowedBooks.length === 0) {
+        return res.status(400).json({ message: "User has no borrowed books" });
+}
+        const borrowedBooks = userWithBooks.borrowedBooks;
+        const borrowedBooksIds = borrowedBooks.map(book => book.bookID);
+
+        const allExist = book_ids.every(item => borrowedBooksIds.includes(item));
+
+        if (!allExist) {
+            return res.status(400).json({
+                message: "User is trying to return a book that was not borrowed",
+                userId: borrower_id,
+                bookIdsToReturn: book_ids,
+                borrowedBooks: borrowedBooks
+            });
+        }
+
+
+        // Update functions
         if (!Array.isArray(book_ids)) {
             book_ids = [book_ids]
         }
 
          const books = await bookModelSchema.find(
         { bookID: { $in: book_ids } },    
-        '_id'                             
+        '_id bookID title is_available'                             
         );
 
         const book_object_ids = books.map(book => book._id);
+        const availableBooks = books.filter(book => book.is_available === true);
+
+        if (availableBooks.length >= 1) {
+            return res.status(400).json({
+                message: "One or more books already returned",
+                Books: availableBooks
+            })
+        }
 
         const returned_books = await bookModelSchema.updateMany(
             { bookID: { $in: book_ids } },

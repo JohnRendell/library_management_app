@@ -128,11 +128,11 @@ route.get("/books", async (req, res)=>{
  *                   type: string
  *                   example: "Internal Error"
  */
-
 // get book by id
 route.get("/books/:id", async (req, res)=>{
-    try{
-        const check_book = await bookModelSchema.findOne({bookID: Number(req.params.id) })
+    try {
+        const book_id = sanitize(req.params.id);
+        const check_book = await bookModelSchema.findOne({bookID: Number(book_id) })
         let message = "OK: Successfully Retrieved the Book";
         let status = 200;
 
@@ -203,7 +203,6 @@ route.get("/books/:id", async (req, res)=>{
  *                   type: string
  *                   example: "Internal Error"
  */
-
 // add book
 route.post("/books", async (req, res)=>{
     try{
@@ -229,7 +228,7 @@ route.post("/books", async (req, res)=>{
 });
 /**
  * @swagger
- * /books/bulk:
+ * /books:
  *   delete:
  *     summary: Delete multiple books by IDs
  *     tags: ["Books"]
@@ -300,10 +299,8 @@ route.post("/books", async (req, res)=>{
 // delete one or multiple book entries
 route.delete("/books", async (req, res) => {
     try {
-        console.log("Atleast this works");
 
-        
-        let book_ids = req.body.book_ids;
+        let book_ids = sanitize(req.body.book_ids);
 
         if ( book_ids.length === 0) {
             return res.status(400).json({ message: "Bad Request: Provide an array of bookIDs" });
@@ -332,7 +329,7 @@ route.delete("/books", async (req, res) => {
 })  
 /**
  * @swagger
- * /books/bulk/borrow:
+ * /books/borrow:
  *   patch:
  *     summary: Borrow multiple books by IDs
  *     tags: ["Books"]
@@ -398,7 +395,7 @@ route.delete("/books", async (req, res) => {
 // borrow one or multiple books
 route.patch("/books/borrow", async (req, res) => {
     try {
-        const borrower_id = req.body.user_id
+        const borrower_id = req.body.user_id;
         let book_ids = req.body.book_ids;
        
          // Validation Functions
@@ -453,7 +450,7 @@ route.patch("/books/borrow", async (req, res) => {
 });
 /**
  * @swagger
- * /books/bulk/return:
+ * /books/return:
  *   patch:
  *     summary: Return multiple borrowed books by IDs
  *     tags: ["Books"]
@@ -520,8 +517,8 @@ route.patch("/books/borrow", async (req, res) => {
 route.patch("/books/return", async (req, res) => {
     try {
 
-        const borrower_id = req.body.user_id
-        let book_ids = req.body.book_ids
+        const borrower_id = req.body.user_id;
+        let book_ids = req.body.book_ids;
 
         // Validation Functions
         const user = await userModelSchema.findOne({
@@ -594,7 +591,6 @@ route.patch("/books/return", async (req, res) => {
     }
   
 });
-
 /**
  * @swagger
  * /books/{id}:
@@ -677,10 +673,6 @@ route.patch("/books/:id", async (req, res)=>{
         res.status(500).json({ message: "Internal Error"})
     }
 });
-
-
-
-
 
 
 module.exports = route

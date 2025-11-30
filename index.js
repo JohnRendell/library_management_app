@@ -4,6 +4,8 @@ const { createServer } = require("http");
 const expressServer = createServer(app)
 const path = require("path")
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 app.use(cors());
 app.use(express.json())
@@ -13,8 +15,6 @@ if(process.env.NODE_ENV !== "production"){
 }
 
 // ----- Swagger Setup -----
-const swaggerUi = require("swagger-ui-express");
-const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerSpec = swaggerJsdoc({
   definition: {
     openapi: "3.0.0",
@@ -55,6 +55,30 @@ const swaggerSpec = swaggerJsdoc({
             publication_date: { type: "string", format: "date", example: "2023-10-25" },
             is_available: { type: "boolean", example: true }
           }
+        },
+        UserSchema: {
+          type: "object",
+          description: "Schema for creating a new user.",
+          required: [
+            "userID", "username", "password", "borrowedBooks"
+          ],
+          properties: {
+            userID: { type: "Number", format: "int32", example: 1 },
+            username: { type: "string", example: "pogiako123" },
+            password: { type: "string", example: "password123" },
+            borrowedBooks: { type: "mongoose.Schema.Types.ObjectId", ref: "books", example: "[]" },
+          }
+        },
+        User: {
+          type: "object",
+          description: "The complete User object returned by the API.",
+          properties: {
+            _id: { type: "string", readOnly: true, description: "MongoDB unique object ID." },
+            userID: { type: "Number", format: "int32", example: 1 },
+            username: { type: "string", example: "pogiako123" },
+            password: { type: "string", example: "password123" },
+            borrowedBooks: { type: "[mongoose.Schema.Types.ObjectId]", ref: "books", example: "[]" },
+          }
         }
       }
     }
@@ -62,7 +86,15 @@ const swaggerSpec = swaggerJsdoc({
   apis: ["./routes/*.js"] 
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const swaggerOptions = {
+  customCss: ".swagger-ui .topbar { display: none }"
+};
+
+app.use(
+  "/api-docs",
+  swaggerUi.serveFiles(swaggerSpec),
+  swaggerUi.setup(swaggerSpec, swaggerOptions)
+);
 
 //connect to mongo db
 const mongoose = require("mongoose");

@@ -309,4 +309,43 @@ route.post("/users/login", login_validation, async (req, res)=>{
     }
 });
 
+/**
+ * @swagger
+ * /api/v1/users/borrowedBooks/{id}:
+ *   get:
+ *     summary: Get a user's info about borrowed books
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the user
+ *     responses:
+ *       200:
+ *         description: Retrieved successfully
+
+ *       404:
+ *         description: User doesn't exist
+ * 
+ *       500:
+ *         description: Internal server error
+ */
+//get user's borrowed books
+route.get("/users/borrowedBooks/:userID", async (req, res)=>{
+    try{
+        const get_book = await userModelSchema.findOne({ userID: req.params.userID });
+
+        if(!get_book){
+            return res.status(404).json({ message: "User doesn't exist" })
+        }
+        return res.status(200).json({ message: "Retrieved successfully", userID: get_book.userID, username: get_book.username, borrowedBooks: get_book.borrowedBooks })
+    }
+    catch(err){
+        return res.status(500).json({ message: err });
+    }
+})
+
 module.exports = route

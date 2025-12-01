@@ -6,6 +6,7 @@ const path = require("path")
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
+const serverless = require("serverless-http");
 
 app.use(cors());
 app.use(express.json())
@@ -90,11 +91,7 @@ const swaggerOptions = {
   customCss: ".swagger-ui .topbar { display: none }"
 };
 
-app.use(
-  "/api-docs",
-  swaggerUi.serveFiles(swaggerSpec),
-  swaggerUi.setup(swaggerSpec, swaggerOptions)
-);
+app.use("/api-docs", swaggerUi.serveFiles(swaggerSpec), swaggerUi.setup(swaggerSpec, swaggerOptions));
 
 //connect to mongo db
 const mongoose = require("mongoose");
@@ -128,3 +125,6 @@ let port = process.env.PORT
 expressServer.listen(port, () =>{
     console.log("listening to " + port)
 })
+
+module.exports = app;
+module.exports.handler = serverless(app);

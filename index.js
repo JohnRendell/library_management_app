@@ -6,7 +6,6 @@ const path = require("path")
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
-const serverless = require("serverless-http");
 
 app.use(cors());
 app.use(express.json())
@@ -87,11 +86,15 @@ const swaggerSpec = swaggerJsdoc({
   apis: ["./routes/*.js"] 
 });
 
-const swaggerOptions = {
-  customCss: ".swagger-ui .topbar { display: none }"
-};
-
-app.use("/api-docs", swaggerUi.serveFiles(swaggerSpec), swaggerUi.setup(swaggerSpec, swaggerOptions));
+// For Vercel compatibility
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: ".swagger-ui .topbar { display: none }",
+  customSiteTitle: "Library Management API",
+  swaggerOptions: {
+    persistAuthorization: true,
+    tryItOutEnabled: true
+  }
+}));
 
 //connect to mongo db
 const mongoose = require("mongoose");
@@ -125,6 +128,3 @@ let port = process.env.PORT
 expressServer.listen(port, () =>{
     console.log("listening to " + port)
 })
-
-module.exports = app;
-module.exports.handler = serverless(app);
